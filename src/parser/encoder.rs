@@ -102,3 +102,12 @@ pub fn macro_pin_port_class_encode(input: &str) -> LefRes<&str, u8> {
         map(tag("BUMP"), |_| 2),
     )))(input)
 }
+
+pub fn antenna_model_encode(input: &str) -> LefRes<&str, u8> {
+    ws(alt((
+        map(tag("OXIDE1"), |_| 0),
+        map(tag("OXIDE2"), |_| 1),
+        map(tag("OXIDE3"), |_| 2),
+        map(tag("OXIDE4"), |_| 3),
+    )))(input)
+}

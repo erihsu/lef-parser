@@ -14,8 +14,8 @@ pub fn header_section(
     tuple((
         many0(lef_comment),
         opt(version_num),
-        opt(divider_char),
         opt(busbit_chars),
+        opt(divider_char),
     ))(input)
 }
 

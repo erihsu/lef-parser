@@ -2,7 +2,7 @@ pub struct LefData {
     pub version: f32,
     pub dividechar: String,
     pub busbitchar: String,
-    pub site: LefSite,
+    pub site: Option<LefSite>,
     pub macro_: Vec<LefMacro>,
 }
 
@@ -20,15 +20,15 @@ pub struct LefSite {
 pub struct LefMacro {
     pub macro_name: String,
     pub macro_class: u8,
-    pub foreign_cell: (String, Option<(i32, i32)>, Option<u8>),
-    pub origin: (i32, i32),
-    pub eeq_macro: String,
-    pub macro_size: (u32, u32),
+    pub foreign_cell: (String, Option<(f32, f32)>, Option<u8>),
+    pub origin: (f32, f32),
+    pub eeq_macro: Option<String>,
+    pub macro_size: (f32, f32),
     pub macro_symmetry: Vec<u8>,
     pub macro_site: Vec<MacroSite>,
     pub macro_pin: Vec<MacroPin>,
     pub macro_obs: Vec<MacroOBS>,
-    pub macro_density: Vec<MacroDensity>,
+    pub macro_density: Option<MacroDensity>,
 }
 
 pub struct MacroSite {
@@ -38,33 +38,46 @@ pub struct MacroSite {
 
 pub struct MacroPin {
     pub pin_name: String,
-    pub taper_rule: String,
+    pub taper_rule: Option<String>,
     pub direction: u8,
     pub use_type: u8,
-    pub net_expr: String,
-    pub ground_sensitivity: String,
-    pub supply_sensitivity: String,
-    pub mustjoin: String,
-    pub shape: u8,
-    pub macro_port: Vec<(u8, PortLayerGeometry)>, // (class,MacroPortObj)
+    pub net_expr: Option<String>,
+    pub ground_sensitivity: Option<String>,
+    pub supply_sensitivity: Option<String>,
+    pub mustjoin: Option<String>,
+    pub shape: Option<u8>,
+    pub pin_port: Vec<(Option<u8>, PortLayerGeometry)>, // (class,MacroPortObj)
+    pub pin_antenna: Option<MacroPinAntenna>,
+}
+
+pub struct MacroPinAntenna {
+    pub partial_metal_area: Option<f32>,
+    pub partial_metal_sidearea: Option<f32>,
+    pub partial_cutarea: Option<f32>,
+    pub diffarea: Option<f32>,
+    pub model: u8,
+    pub gatearea: Option<f32>,
+    pub max_area_car: Option<f32>,
+    pub max_sidearea_car: Option<f32>,
+    pub max_cut_car: Option<f32>,
 }
 
 pub struct PortLayerGeometry {
     pub layer_name: String,
     pub if_exceptpgnet: bool,
-    pub minspacing: (bool, u32), //(if from spacing or designrulewidth, minspacing)
+    pub minspacing: Option<(bool, u32)>, //(if from spacing or designrulewidth, minspacing)
     pub geometries: Vec<PortGeometry>,
 }
 
 pub struct PortViaGeometry {
     pub via_name: String,
-    pub via_location: (i32, i32),
+    pub via_location: (f32, f32),
 }
 
 pub enum PortGeometry {
-    Path(Vec<(i32, i32)>),
-    Rect(((i32, i32), (i32, i32))),
-    Polygon(Vec<(i32, i32)>),
+    Path(Vec<(f32, f32)>),
+    Rect(((f32, f32), (f32, f32))),
+    Polygon(Vec<(f32, f32)>),
 }
 
 pub enum MacroOBS {
@@ -74,5 +87,5 @@ pub enum MacroOBS {
 
 pub struct MacroDensity {
     pub layer_name: String,
-    pub rect_region: Vec<(((i32, i32), (i32, i32)), f32)>,
+    pub rect_region: Vec<(((f32, f32), (f32, f32)), f32)>,
 }

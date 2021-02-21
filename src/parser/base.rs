@@ -43,19 +43,6 @@ pub fn positive_number(input: &str) -> LefRes<&str, u32> {
     ws(map_res(recognize(digit1), |res: &str| u32::from_str(res)))(input)
 }
 
-// // signed integer number
-// // ie, 100, -20
-pub fn number(input: &str) -> LefRes<&str, i32> {
-    ws(map_res(
-        recognize(pair(opt(alt((tag("+"), tag("-")))), digit1)),
-        |res: &str| i32::from_str(res),
-    ))(input)
-}
-
-pub fn number_str(input: &str) -> LefRes<&str, &str> {
-    ws(recognize(pair(opt(alt((tag("+"), tag("-")))), digit1)))(input)
-}
-
 // parse unsigned floating number
 // The following is adapted from the Python parser by Valentin Lorentz (ProgVal).
 pub fn float(input: &str) -> LefRes<&str, f32> {
@@ -68,14 +55,14 @@ pub fn float(input: &str) -> LefRes<&str, f32> {
                 opt(tuple((one_of("eE"), opt(one_of("+-")), decimal))),
             ))), // Case two: 42e42 and 42.42e42
             recognize(tuple((
+                opt(char('-')),
                 decimal,
                 opt(preceded(char('.'), decimal)),
                 one_of("eE"),
                 opt(one_of("+-")),
                 decimal,
             ))), // Case three: 42. and 42.42
-            recognize(tuple((decimal, char('.'), opt(decimal)))),
-            recognize(decimal), // case four: integer representation of float number
+            recognize(tuple((opt(char('-')), decimal, char('.'), opt(decimal)))),
         )),
         |res: &str| f32::from_str(res),
     ))(input)

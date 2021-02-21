@@ -1,7 +1,7 @@
 mod model;
 mod parser;
 
-use model::LefData;
+pub use model::LefData;
 use nom::{
     error::{convert_error, VerboseError},
     Err, IResult,
@@ -18,7 +18,7 @@ impl FromStr for LefData {
         match lef_parser(s) {
             Ok((_, u)) => Ok(u),
             Err(Err::Error(e)) => {
-                println!("[TFParser] `VerboseError`:\n{}", convert_error(s, e));
+                println!("[LEFParser] `VerboseError`:\n{}", convert_error(s, e));
                 Err(Error::new(
                     ErrorKind::InvalidData,
                     "Invalid Technology File",
