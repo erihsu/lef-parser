@@ -1,7 +1,7 @@
 mod model;
 mod parser;
 
-pub use model::LefData;
+pub use model::{LefData,LefMacro};
 use nom::{
     error::{convert_error, VerboseError},
     Err, IResult,
