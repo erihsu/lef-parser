@@ -27,7 +27,7 @@ pub struct LefMacro {
     pub macro_symmetry: Vec<u8>,
     pub macro_site: Vec<MacroSite>,
     pub macro_pin: Vec<MacroPin>,
-    pub macro_obs: Vec<MacroOBS>,
+    pub macro_obs: Vec<PortShape>,
     pub macro_density: Option<MacroDensity>,
 }
 
@@ -46,7 +46,7 @@ pub struct MacroPin {
     pub supply_sensitivity: Option<String>,
     pub mustjoin: Option<String>,
     pub shape: Option<u8>,
-    pub pin_port: Vec<(Option<u8>, PortLayerGeometry)>, // (class,MacroPortObj)
+    pub pin_port: PortShape, // (class,MacroPortObj) // assume only one port in each pin
     pub pin_antenna: Option<MacroPinAntenna>,
 }
 
@@ -61,29 +61,34 @@ pub struct MacroPinAntenna {
     pub max_sidearea_car: Option<f32>,
     pub max_cut_car: Option<f32>,
 }
-
-pub struct PortLayerGeometry {
-    pub layer_name: String,
-    pub if_exceptpgnet: bool,
-    pub minspacing: Option<(bool, u32)>, //(if from spacing or designrulewidth, minspacing)
+pub struct PortShape {
+    pub layer_name: String, // layer name
     pub geometries: Vec<PortGeometry>,
 }
 
-pub struct PortViaGeometry {
-    pub via_name: String,
-    pub via_location: (f32, f32),
-}
+// pub struct PortLayerGeometry {
+//     pub layer_name: String,
+//     pub if_exceptpgnet: bool,
+//     pub minspacing: Option<(bool, u32)>, //(if from spacing or designrulewidth, minspacing)
+//     pub geometries: Vec<PortGeometry>,
+// }
+
+// pub struct PortViaGeometry {
+//     pub via_name: String,
+//     pub via_location: (f32, f32),
+// }
 
 pub enum PortGeometry {
     Path(Vec<(f32, f32)>),
     Rect(((f32, f32), (f32, f32))),
     Polygon(Vec<(f32, f32)>),
+    Via((String, (f32, f32))),
 }
 
-pub enum MacroOBS {
-    LayerObj(PortLayerGeometry),
-    ViaObj(PortViaGeometry),
-}
+// pub enum MacroOBS {
+//     LayerObj(PortLayerGeometry),
+//     ViaObj(PortViaGeometry),
+// }
 
 pub struct MacroDensity {
     pub layer_name: String,

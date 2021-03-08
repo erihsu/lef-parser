@@ -1,7 +1,6 @@
 use crate::{
     model::{
-        LefMacro, MacroDensity, MacroOBS, MacroPin, MacroPinAntenna, MacroSite, PortGeometry,
-        PortLayerGeometry, PortViaGeometry,
+        LefMacro, MacroDensity, MacroPin, MacroPinAntenna, MacroSite, PortGeometry, PortShape,
     },
     LefRes,
 };
@@ -106,7 +105,8 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
                     macro_pin_direction_encode,
                     ws(tag(";")),
                 ),
-                many1(macro_pin_port),
+                // assume one port, one pin
+                macro_pin_port,
                 opt(delimited(ws(tag("USE")), use_type_encode, ws(tag(";")))),
                 opt(delimited(
                     ws(tag("SHAPE")),
@@ -137,7 +137,7 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
             MacroPin {
                 pin_name: data.0.to_string(),
                 direction: data.1,
-                pin_port: data.2, // (class,MacroPortObj)
+                pin_port: (data.2).1, // (class,MacroPortObj)
                 use_type: data.3.map_or(0, |s| s),
                 shape: data.4,
                 taper_rule: data.5.map(|x| x.to_string()),
@@ -152,7 +152,7 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
 }
 
 // ITERATE syntax not supported
-fn port_layer_geometry(input: &str) -> LefRes<&str, PortLayerGeometry> {
+fn port_geometry(input: &str) -> LefRes<&str, PortShape> {
     context(
         "Macro Pin Layer Geometry Statement",
         tuple((
@@ -183,39 +183,41 @@ fn port_layer_geometry(input: &str) -> LefRes<&str, PortLayerGeometry> {
                 map(delimited(ws(tag("POLYGON")), pt_list, ws(tag(";"))), |x| {
                     PortGeometry::Polygon(x)
                 }),
+                map(
+                    delimited(ws(tag("VIA")), tuple((pt, tstring)), ws(tag(";"))),
+                    |x| PortGeometry::Via((x.1.to_string(), x.0)),
+                ),
             ))),
         )),
     )(input)
     .map(|(res, data)| {
         (
             res,
-            PortLayerGeometry {
+            PortShape {
                 layer_name: (data.0).0.to_string(),
-                if_exceptpgnet: (data.0).1,
-                minspacing: (data.0).2, //(if from spacing or designrulewidth, minspacing)
                 geometries: data.1,
             },
         )
     })
 }
 
-fn port_via_geometry(input: &str) -> LefRes<&str, PortViaGeometry> {
-    context(
-        "Macro Pin & Obstacle Port Via Statement",
-        delimited(ws(tag("VIA")), tuple((pt, tstring)), ws(tag(";"))),
-    )(input)
-    .map(|(res, data)| {
-        (
-            res,
-            PortViaGeometry {
-                via_name: data.1.to_string(),
-                via_location: data.0,
-            },
-        )
-    })
-}
+// fn port_via_geometry(input: &str) -> LefRes<&str, PortViaGeometry> {
+//     context(
+//         "Macro Pin & Obstacle Port Via Statement",
+//         delimited(ws(tag("VIA")), tuple((pt, tstring)), ws(tag(";"))),
+//     )(input)
+//     .map(|(res, data)| {
+//         (
+//             res,
+//             PortViaGeometry {
+//                 via_name: data.1.to_string(),
+//                 via_location: data.0,
+//             },
+//         )
+//     })
+// }
 
-fn macro_pin_port(input: &str) -> LefRes<&str, (Option<u8>, PortLayerGeometry)> {
+fn macro_pin_port(input: &str) -> LefRes<&str, (Option<u8>, PortShape)> {
     context(
         "Macro Pin Port Statement",
         delimited(
@@ -226,24 +228,17 @@ fn macro_pin_port(input: &str) -> LefRes<&str, (Option<u8>, PortLayerGeometry)> 
                     macro_pin_port_class_encode,
                     ws(tag(";")),
                 )),
-                port_layer_geometry,
+                port_geometry,
             )),
             ws(tag("END")),
         ),
     )(input)
 }
 
-fn obs_statement(input: &str) -> LefRes<&str, Vec<MacroOBS>> {
+fn obs_statement(input: &str) -> LefRes<&str, Vec<PortShape>> {
     context(
         "Macro Obstacle Statement",
-        delimited(
-            ws(tag("OBS")),
-            many1(alt((
-                map(port_layer_geometry, |x| MacroOBS::LayerObj(x)),
-                map(port_via_geometry, |x| MacroOBS::ViaObj(x)),
-            ))),
-            ws(tag("END")),
-        ),
+        delimited(ws(tag("OBS")), many1(port_geometry), ws(tag("END"))),
     )(input)
 }
 
