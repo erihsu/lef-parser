@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::*;
 fn main() {
-    use lef_parser::LefData;
+    use lef_parser::model::LefData;
     let now = SystemTime::now();
     let _lef_data: LefData = fs::read_to_string("example_cell.lef")
         .unwrap()

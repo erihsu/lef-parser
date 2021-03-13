@@ -97,35 +97,44 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
         "Macro Pin Statement",
         delimited(
             ws(tag("PIN")),
-            permutation((
+            tuple((
                 // basic infomation, must declare
                 tstring, // pin name
+                // 1
+                opt(delimited(ws(tag("TAPERRULE")), tstring, ws(tag(";")))),
+                // 2
                 delimited(
                     ws(tag("DIRECTION")),
                     macro_pin_direction_encode,
                     ws(tag(";")),
                 ),
-                // assume one port, one pin
-                macro_pin_port,
+                // 3
                 opt(delimited(ws(tag("USE")), use_type_encode, ws(tag(";")))),
-                opt(delimited(
-                    ws(tag("SHAPE")),
-                    macro_pin_shape_encode,
-                    ws(tag(";")),
-                )),
-                opt(delimited(ws(tag("TAPERRULE")), tstring, ws(tag(";")))),
+                // 4
                 opt(delimited(ws(tag("NETEXPR")), qstring, ws(tag(";")))),
+                // 5
                 opt(delimited(
                     ws(tag("SUPPLYSENSITIVITY")),
                     tstring,
                     ws(tag(";")),
                 )),
+                // 6
                 opt(delimited(
                     ws(tag("GROUNDSENSITIVITY")),
                     tstring,
                     ws(tag(";")),
                 )),
+                // 7
+                opt(delimited(
+                    ws(tag("SHAPE")),
+                    macro_pin_shape_encode,
+                    ws(tag(";")),
+                )),
+                // 8
                 opt(delimited(ws(tag("MUSTJOIN")), tstring, ws(tag(";")))),
+                // 9
+                macro_pin_port,
+                // 10
                 opt(pin_antenna_statement),
             )),
             tuple((ws(tag("END")), tstring)),
@@ -136,15 +145,15 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
             res,
             MacroPin {
                 pin_name: data.0.to_string(),
-                direction: data.1,
-                pin_port: (data.2).1, // (class,MacroPortObj)
+                direction: data.2,
+                pin_port: (data.9).1, // (class,MacroPortObj)
                 use_type: data.3.map_or(0, |s| s),
-                shape: data.4,
-                taper_rule: data.5.map(|x| x.to_string()),
-                net_expr: data.6.map(|x| x.to_string()),
-                supply_sensitivity: data.7.map(|x| x.to_string()),
-                ground_sensitivity: data.8.map(|x| x.to_string()),
-                mustjoin: data.9.map(|x| x.to_string()),
+                shape: data.7,
+                taper_rule: data.1.map(|x| x.to_string()),
+                net_expr: data.4.map(|x| x.to_string()),
+                supply_sensitivity: data.5.map(|x| x.to_string()),
+                ground_sensitivity: data.6.map(|x| x.to_string()),
+                mustjoin: data.8.map(|x| x.to_string()),
                 pin_antenna: data.10,
             },
         )
@@ -217,7 +226,7 @@ fn port_geometry(input: &str) -> LefRes<&str, PortShape> {
 //     })
 // }
 
-fn macro_pin_port(input: &str) -> LefRes<&str, (Option<u8>, PortShape)> {
+fn macro_pin_port(input: &str) -> LefRes<&str, (Option<u8>, Vec<PortShape>)> {
     context(
         "Macro Pin Port Statement",
         delimited(
@@ -228,7 +237,7 @@ fn macro_pin_port(input: &str) -> LefRes<&str, (Option<u8>, PortShape)> {
                     macro_pin_port_class_encode,
                     ws(tag(";")),
                 )),
-                port_geometry,
+                many1(port_geometry),
             )),
             ws(tag("END")),
         ),
@@ -326,4 +335,60 @@ fn pin_antenna_statement(input: &str) -> LefRes<&str, MacroPinAntenna> {
             },
         )
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_pin() {
+        let test_str = "  PIN VDD
+    DIRECTION INOUT ;
+    USE POWER ;
+    SHAPE ABUTMENT ;
+    PORT
+      LAYER M2 ;
+        RECT 0 1.175 15.12 1.345 ;
+        RECT 7.055 0.664 7.155 0.764 ;
+        RECT 6.134 0.679 7.155 0.749 ;
+        RECT 6.119 0.467 6.219 0.567 ;
+        RECT 6.134 0.444 6.204 1.345 ;
+      LAYER M1 ;
+        RECT 7.055 0.679 7.815 0.749 ;
+        RECT 7.055 0.664 7.155 0.764 ;
+        RECT 6.108 1.212 6.99 1.302 ;
+        RECT 6.87 1.012 6.99 1.302 ;
+        RECT 6.357 1.21 6.747 1.32 ;
+        RECT 6.488 1.012 6.608 1.32 ;
+        RECT 6.108 1.012 6.228 1.302 ;
+        RECT 6.119 0.467 6.219 0.567 ;
+        RECT 0.296 0.467 6.219 0.537 ;
+        RECT 5.35 1.212 5.85 1.302 ;
+        RECT 5.73 1.012 5.85 1.302 ;
+        RECT 5.35 1.012 5.47 1.302 ;
+        RECT 4.593 1.212 5.093 1.302 ;
+        RECT 4.973 1.012 5.093 1.302 ;
+        RECT 4.593 1.012 4.713 1.302 ;
+        RECT 3.834 1.212 4.334 1.302 ;
+        RECT 4.214 1.012 4.334 1.302 ;
+        RECT 3.834 1.012 3.954 1.302 ;
+        RECT 3.071 1.212 3.571 1.302 ;
+        RECT 3.451 1.012 3.571 1.302 ;
+        RECT 3.071 1.012 3.191 1.302 ;
+        RECT 2.314 1.212 2.814 1.302 ;
+        RECT 2.694 1.012 2.814 1.302 ;
+        RECT 2.314 1.012 2.434 1.302 ;
+        RECT 1.551 1.212 2.051 1.302 ;
+        RECT 1.931 1.012 2.051 1.302 ;
+        RECT 1.551 1.012 1.671 1.302 ;
+        RECT 0.792 1.212 1.292 1.302 ;
+        RECT 1.172 1.012 1.292 1.302 ;
+        RECT 0.792 1.012 0.912 1.302 ;
+        RECT 0.029 1.212 0.529 1.302 ;
+        RECT 0.409 1.012 0.529 1.302 ;
+        RECT 0.029 0.867 0.149 1.302 ;
+    END
+      END VDD";
+        let (_, _) = pin_statement(test_str).unwrap();
+    }
 }

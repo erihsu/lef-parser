@@ -13,7 +13,7 @@ pub fn lef_parser(input: &str) -> LefRes<&str, LefData> {
         "Cell LEF",
         tuple((
             header_section,
-            opt(site_parser),
+            site_parser,
             many1(macro_parser),
             opt(tuple((ws(tag("END")), ws(tag("LIBRARY"))))),
         )),

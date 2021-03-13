@@ -2,7 +2,7 @@ pub struct LefData {
     pub version: f32,
     pub dividechar: String,
     pub busbitchar: String,
-    pub site: Option<LefSite>,
+    pub site: LefSite,
     pub macro_: Vec<LefMacro>,
 }
 
@@ -14,7 +14,7 @@ pub struct LefSite {
     pub site_symmetry: Option<Vec<u8>>,
     // row_pattern: previous_row_name, orient_code
     pub row_pattern: Option<Vec<(String, u8)>>,
-    pub site_size: (u32, u32), // width ,height
+    pub site_size: (f32, f32), // width ,height
 }
 
 pub struct LefMacro {
@@ -46,7 +46,7 @@ pub struct MacroPin {
     pub supply_sensitivity: Option<String>,
     pub mustjoin: Option<String>,
     pub shape: Option<u8>,
-    pub pin_port: PortShape, // (class,MacroPortObj) // assume only one port in each pin
+    pub pin_port: Vec<PortShape>, // (class,MacroPortObj) // assume only one port in each pin
     pub pin_antenna: Option<MacroPinAntenna>,
 }
 

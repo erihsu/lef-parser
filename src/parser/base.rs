@@ -7,7 +7,7 @@ use nom::combinator::{map_res, opt, recognize};
 use nom::multi::{many0, many1};
 
 use crate::LefRes;
-use nom::sequence::{delimited, pair, preceded, terminated, tuple};
+use nom::sequence::{delimited, pair, terminated, tuple};
 use std::str;
 use std::str::FromStr;
 
@@ -43,26 +43,14 @@ pub fn positive_number(input: &str) -> LefRes<&str, u32> {
     ws(map_res(recognize(digit1), |res: &str| u32::from_str(res)))(input)
 }
 
-// parse unsigned floating number
-// The following is adapted from the Python parser by Valentin Lorentz (ProgVal).
+// parse signed floating number
+// The following is modified from the Python parser by Valentin Lorentz (ProgVal).
 pub fn float(input: &str) -> LefRes<&str, f32> {
     ws(map_res(
         alt((
-            // Case one: .42
-            recognize(tuple((
-                char('.'),
-                decimal,
-                opt(tuple((one_of("eE"), opt(one_of("+-")), decimal))),
-            ))), // Case two: 42e42 and 42.42e42
-            recognize(tuple((
-                opt(char('-')),
-                decimal,
-                opt(preceded(char('.'), decimal)),
-                one_of("eE"),
-                opt(one_of("+-")),
-                decimal,
-            ))), // Case three: 42. and 42.42
+            // Case one: 42. and 42.42
             recognize(tuple((opt(char('-')), decimal, char('.'), opt(decimal)))),
+            recognize(tuple((opt(char('-')), decimal))), // case two: integer as float number
         )),
         |res: &str| f32::from_str(res),
     ))(input)
