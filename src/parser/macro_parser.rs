@@ -391,4 +391,37 @@ mod tests {
       END VDD";
         let (_, _) = pin_statement(test_str).unwrap();
     }
+
+    #[test]
+    fn test_macro() {
+        let test_str = "MACRO A2SDFFQN_X0P5M_A9TL40
+  CLASS CORE ;
+  ORIGIN 0 0 ;
+  FOREIGN A2SDFFQN_X0P5M_A9TL40 0 0 ;
+  SIZE 4.37 BY 1.26 ;
+  SYMMETRY X Y ;
+  SITE sc9mc_logic0040ll ;
+  PIN A
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAMODEL OXIDE1 ;
+      ANTENNAGATEAREA 0.02 LAYER M1 ;
+    PORT
+      LAYER M1 ;
+        RECT 1.385 0.595 1.515 0.805 ;
+    END
+  END A
+  PIN B
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAMODEL OXIDE1 ;
+      ANTENNAGATEAREA 0.02 LAYER M1 ;
+    PORT
+      LAYER M1 ;
+        RECT 1.04 0.595 1.17 0.805 ;
+    END
+  END B
+  END A2SDFFQN_X0P5M_A9TL40";
+        let (_, _) = macro_parser(test_str).unwrap();
+    }
 }

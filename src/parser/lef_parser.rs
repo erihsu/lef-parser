@@ -4,19 +4,18 @@ use super::macro_parser::*;
 use super::site_parser::*;
 use crate::{model::LefData, LefRes};
 use nom::bytes::complete::tag;
-use nom::combinator::opt;
+
 use nom::error::context;
 use nom::multi::many1;
+use nom::sequence::terminated;
 use nom::sequence::tuple;
 pub fn lef_parser(input: &str) -> LefRes<&str, LefData> {
     context(
         "Cell LEF",
-        tuple((
-            header_section,
-            site_parser,
-            many1(macro_parser),
-            opt(tuple((ws(tag("END")), ws(tag("LIBRARY"))))),
-        )),
+        terminated(
+            tuple((header_section, site_parser, many1(macro_parser))),
+            tuple((ws(tag("END")), ws(tag("LIBRARY")))),
+        ),
     )(input)
     .map(|(res, data)| {
         (
