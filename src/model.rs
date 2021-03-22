@@ -27,7 +27,7 @@ pub struct LefMacro {
     pub macro_symmetry: Vec<u8>,
     pub macro_site: Vec<MacroSite>,
     pub macro_pin: Vec<MacroPin>,
-    pub macro_obs: Vec<PortShape>,
+    pub macro_obs: Option<Vec<PortShape>>,
     pub macro_density: Option<MacroDensity>,
 }
 
@@ -47,7 +47,7 @@ pub struct MacroPin {
     pub mustjoin: Option<String>,
     pub shape: Option<u8>,
     pub pin_port: Vec<PortShape>, // (class,MacroPortObj) // assume only one port in each pin
-    pub pin_antenna: Option<MacroPinAntenna>,
+                                  // pub pin_antenna: Option<MacroPinAntenna>,
 }
 
 pub struct MacroPinAntenna {

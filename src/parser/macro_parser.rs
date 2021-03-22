@@ -1,12 +1,10 @@
 use crate::{
-    model::{
-        LefMacro, MacroDensity, MacroPin, MacroPinAntenna, MacroSite, PortGeometry, PortShape,
-    },
+    model::{LefMacro, MacroDensity, MacroPin, MacroSite, PortGeometry, PortShape},
     LefRes,
 };
-use nom::branch::{alt, permutation};
-use nom::bytes::complete::tag;
-use nom::combinator::{map, opt};
+use nom::branch::alt;
+use nom::bytes::complete::{tag, take_until};
+use nom::combinator::{map, opt, value};
 use nom::error::context;
 use nom::multi::many1;
 use nom::sequence::{delimited, preceded, separated_pair, tuple};
@@ -14,23 +12,23 @@ use nom::sequence::{delimited, preceded, separated_pair, tuple};
 use super::base::{float, positive_number, qstring, tstring, ws};
 use super::common::{pt, pt_list, rect};
 use super::encoder::{
-    antenna_model_encode, macro_class_encode, macro_pin_direction_encode,
-    macro_pin_port_class_encode, macro_pin_shape_encode, orient_encode, use_type_encode,
+    macro_class_encode, macro_pin_direction_encode, macro_pin_port_class_encode,
+    macro_pin_shape_encode, orient_encode, use_type_encode,
 };
 pub fn macro_parser(input: &str) -> LefRes<&str, LefMacro> {
     context(
         "Macro Statement",
         delimited(
             ws(tag("MACRO")),
-            permutation((
+            tuple((
                 tstring,
                 delimited(ws(tag("CLASS")), macro_class_encode, ws(tag(";"))),
+                delimited(ws(tag("ORIGIN")), pt, ws(tag(";"))),
                 delimited(
                     ws(tag("FOREIGN")),
                     tuple((tstring, opt(pt), opt(orient_encode))),
                     ws(tag(";")),
                 ),
-                delimited(ws(tag("ORIGIN")), pt, ws(tag(";"))),
                 delimited(
                     ws(tag("SIZE")),
                     separated_pair(float, ws(tag("BY")), float),
@@ -47,7 +45,7 @@ pub fn macro_parser(input: &str) -> LefRes<&str, LefMacro> {
                 ),
                 many1(site_statement),
                 many1(pin_statement),
-                obs_statement,
+                opt(obs_statement),
                 opt(density_statement),
                 opt(delimited(ws(tag("EEQ")), tstring, ws(tag(";")))),
             )),
@@ -60,8 +58,8 @@ pub fn macro_parser(input: &str) -> LefRes<&str, LefMacro> {
             LefMacro {
                 macro_name: data.0.to_string(),
                 macro_class: data.1,
-                foreign_cell: ((data.2).0.to_string(), (data.2).1, (data.2).2),
-                origin: data.3,
+                foreign_cell: ((data.3).0.to_string(), (data.3).1, (data.3).2),
+                origin: data.2,
                 eeq_macro: data.10.map(|s| s.to_string()),
                 macro_size: data.4,
                 macro_symmetry: data.5,
@@ -133,9 +131,9 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
                 // 8
                 opt(delimited(ws(tag("MUSTJOIN")), tstring, ws(tag(";")))),
                 // 9
-                macro_pin_port,
-                // 10
                 opt(pin_antenna_statement),
+                // 10
+                macro_pin_port,
             )),
             tuple((ws(tag("END")), tstring)),
         ),
@@ -146,7 +144,7 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
             MacroPin {
                 pin_name: data.0.to_string(),
                 direction: data.2,
-                pin_port: (data.9).1, // (class,MacroPortObj)
+                pin_port: (data.10).1, // (class,MacroPortObj)
                 use_type: data.3.map_or(0, |s| s),
                 shape: data.7,
                 taper_rule: data.1.map(|x| x.to_string()),
@@ -154,7 +152,7 @@ pub fn pin_statement(input: &str) -> LefRes<&str, MacroPin> {
                 supply_sensitivity: data.5.map(|x| x.to_string()),
                 ground_sensitivity: data.6.map(|x| x.to_string()),
                 mustjoin: data.8.map(|x| x.to_string()),
-                pin_antenna: data.10,
+                // pin_antenna: data.9,
             },
         )
     })
@@ -279,62 +277,69 @@ fn density_statement(input: &str) -> LefRes<&str, MacroDensity> {
         )
     })
 }
-// partial checking model
-fn pin_antenna_statement(input: &str) -> LefRes<&str, MacroPinAntenna> {
-    context(
-        "Macro Pin Antenna Statement",
-        tuple((
-            tuple((
-                opt(delimited(
-                    ws(tag("ANTENNAPARTIALMETALAREA")),
-                    float,
-                    ws(tag(";")),
-                )),
-                opt(delimited(
-                    ws(tag("ANTENNAPARTIALMETALSIDEAREA")),
-                    float,
-                    ws(tag(";")),
-                )),
-                opt(delimited(
-                    ws(tag("ANTENNAPARTIALCUTAREA")),
-                    float,
-                    ws(tag(";")),
-                )),
-            )),
-            opt(delimited(ws(tag("ANTENNADIFFAREA")), float, ws(tag(";")))),
-            opt(delimited(
-                ws(tag("ANTENNAMODEL")),
-                antenna_model_encode,
-                ws(tag(";")),
-            )),
-            opt(delimited(ws(tag("ANTENNAGATEAREA")), float, ws(tag(";")))),
-            tuple((
-                opt(delimited(ws(tag("ANTENNAMAXAREACAR")), float, ws(tag(";")))),
-                opt(delimited(
-                    ws(tag("ANTENNAMAXSIDEAREACAR")),
-                    float,
-                    ws(tag(";")),
-                )),
-                opt(delimited(ws(tag("ANTENNAMAXCUTCAR")), float, ws(tag(";")))),
-            )),
-        )),
+// // partial checking model
+// fn pin_antenna_statement(input: &str) -> LefRes<&str, MacroPinAntenna> {
+//     context(
+//         "Macro Pin Antenna Statement",
+//         tuple((
+//             tuple((
+//                 opt(delimited(
+//                     ws(tag("ANTENNAPARTIALMETALAREA")),
+//                     float,
+//                     ws(tag(";")),
+//                 )),
+//                 opt(delimited(
+//                     ws(tag("ANTENNAPARTIALMETALSIDEAREA")),
+//                     float,
+//                     ws(tag(";")),
+//                 )),
+//                 opt(delimited(
+//                     ws(tag("ANTENNAPARTIALCUTAREA")),
+//                     float,
+//                     ws(tag(";")),
+//                 )),
+//             )),
+//             opt(delimited(ws(tag("ANTENNADIFFAREA")), float, ws(tag(";")))),
+//             opt(delimited(
+//                 ws(tag("ANTENNAMODEL")),
+//                 antenna_model_encode,
+//                 ws(tag(";")),
+//             )),
+//             opt(delimited(ws(tag("ANTENNAGATEAREA")), float, ws(tag(";")))),
+//             tuple((
+//                 opt(delimited(ws(tag("ANTENNAMAXAREACAR")), float, ws(tag(";")))),
+//                 opt(delimited(
+//                     ws(tag("ANTENNAMAXSIDEAREACAR")),
+//                     float,
+//                     ws(tag(";")),
+//                 )),
+//                 opt(delimited(ws(tag("ANTENNAMAXCUTCAR")), float, ws(tag(";")))),
+//             )),
+//         )),
+//     )(input)
+//     .map(|(res, data)| {
+//         (
+//             res,
+//             MacroPinAntenna {
+//                 partial_metal_area: (data.0).0,
+//                 partial_metal_sidearea: (data.0).1,
+//                 partial_cutarea: (data.0).2,
+//                 diffarea: data.1,
+//                 model: data.2.map_or(0, |x| x),
+//                 gatearea: data.3,
+//                 max_area_car: (data.4).0,
+//                 max_sidearea_car: (data.4).1,
+//                 max_cut_car: (data.4).2,
+//             },
+//         )
+//     })
+// }
+
+fn pin_antenna_statement(input: &str) -> LefRes<&str, ()> {
+    value(
+        (),
+        many1(ws(tuple((tag("ANTENNA"), take_until(";"), tag(";"))))),
     )(input)
-    .map(|(res, data)| {
-        (
-            res,
-            MacroPinAntenna {
-                partial_metal_area: (data.0).0,
-                partial_metal_sidearea: (data.0).1,
-                partial_cutarea: (data.0).2,
-                diffarea: data.1,
-                model: data.2.map_or(0, |x| x),
-                gatearea: data.3,
-                max_area_car: (data.4).0,
-                max_sidearea_car: (data.4).1,
-                max_cut_car: (data.4).2,
-            },
-        )
-    })
 }
 
 #[cfg(test)]
@@ -423,5 +428,34 @@ mod tests {
   END B
   END A2SDFFQN_X0P5M_A9TL40";
         let (_, _) = macro_parser(test_str).unwrap();
+    }
+
+    #[test]
+    fn test_pin2() {
+        let test_str = "  PIN A
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAMODEL OXIDE1 ;
+      ANTENNAGATEAREA 0.02 LAYER M1 ;
+    PORT
+      LAYER M1 ;
+        RECT 1.385 0.595 1.515 0.805 ;
+    END
+  END A";
+        let (_, _) = pin_statement(test_str).unwrap();
+    }
+    #[test]
+    fn test_pin3() {
+        let test_str = "  PIN B
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAMODEL OXIDE1 ;
+      ANTENNAGATEAREA 0.02 LAYER M1 ;
+    PORT
+      LAYER M1 ;
+        RECT 1.04 0.595 1.17 0.805 ;
+    END
+  END B";
+        let (_, _) = pin_statement(test_str).unwrap();
     }
 }
