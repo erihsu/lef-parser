@@ -458,4 +458,51 @@ mod tests {
   END B";
         let (_, _) = pin_statement(test_str).unwrap();
     }
+
+    #[test]
+    fn test_macro2() {
+        let test_str = "MACRO ANTENNA1_A9TL40
+  CLASS CORE ANTENNACELL ;
+  ORIGIN 0 0 ;
+  FOREIGN ANTENNA1_A9TL40 0 0 ;
+  SIZE 0.19 BY 1.26 ;
+  SYMMETRY X Y ;
+  SITE sc9mc_logic0040ll ;
+  PIN A
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.0352 LAYER M1 ;
+    PORT
+      LAYER M1 ;
+        RECT 0.055 0.17 0.125 0.555 ;
+    END
+  END A
+  PIN VDD
+    DIRECTION INOUT ;
+    USE POWER ;
+    SHAPE ABUTMENT ;
+    PORT
+      LAYER M2 ;
+        RECT 0 1.175 0.19 1.345 ;
+    END
+  END VDD
+  PIN VSS
+    DIRECTION INOUT ;
+    USE GROUND ;
+    SHAPE ABUTMENT ;
+    PORT
+      LAYER M2 ;
+        RECT 0 -0.085 0.19 0.085 ;
+    END
+  END VSS
+  OBS
+    LAYER LVT ;
+      RECT 0 0 0.19 1.26 ;
+    LAYER CT ;
+      RECT 0.06 0.375 0.12 0.435 ;
+      RECT 0.06 0.235 0.12 0.295 ;
+  END
+END ANTENNA1_A9TL40";
+        let (_, _) = macro_parser(test_str).unwrap();
+    }
 }

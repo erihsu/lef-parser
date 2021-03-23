@@ -61,7 +61,7 @@ pub fn macro_class_encode(input: &str) -> LefRes<&str, u8> {
             map(tuple((tag("CORE"), space1, tag("TIEHIGH"))), |_| 14),
             map(tuple((tag("CORE"), space1, tag("TIELOW"))), |_| 15),
             map(tuple((tag("CORE"), space1, tag("SPACER"))), |_| 16),
-            map(tuple((tag("CORE"), space1, tag("ANNTENACELL"))), |_| 17),
+            map(tuple((tag("CORE"), space1, tag("ANTENNACELL"))), |_| 17),
             map(tuple((tag("CORE"), space1, tag("WELLTAP"))), |_| 18),
             map(tag("CORE"), |_| 19),
         )),
