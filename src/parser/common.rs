@@ -1,11 +1,13 @@
-use super::base::float;
+use super::base::{float, ws};
+use nom::bytes::complete::tag;
+use nom::bytes::complete::take_until;
+use nom::sequence::preceded;
 
-use nom::bytes::complete::is_not;
 use nom::multi::many1;
-use nom::sequence::{pair, separated_pair, tuple};
+use nom::sequence::{separated_pair, tuple};
 // use super::def_types::{Geometry, NetCommonProperty, PropValue, Properties, RtPt};
 
-use nom::character::complete::{char, space0};
+use nom::character::complete::space0;
 use nom::combinator::value;
 
 use crate::LefRes;
@@ -29,6 +31,6 @@ pub fn pt_list(input: &str) -> LefRes<&str, Vec<(f32, f32)>> {
 pub fn lef_comment(input: &str) -> LefRes<&str, ()> {
     value(
         (), // Output is thrown away.
-        pair(char('#'), is_not("\n")),
+        preceded(ws(tag("#")), take_until("VERSION")),
     )(input)
 }
