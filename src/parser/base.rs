@@ -11,7 +11,7 @@ use nom::sequence::{delimited, pair, terminated, tuple};
 use std::str;
 use std::str::FromStr;
 
-// basic parse. Independent from def_parser but it's the most basic parser in def_parser.
+// basic parse.
 
 /// A combinator that takes a parser `inner` and produces a parser that also consumes both leading and
 /// trailing whitespace, returning the output of `inner`.
